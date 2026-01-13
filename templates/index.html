@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kaavalar | Enterprise Document AI</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="fx-noise"></div>
+    <div class="fx-blob blob-1"></div>
+    <div class="fx-blob blob-2"></div>
+    
+    <nav class="navbar">
+        <div class="nav-brand">
+            <div class="brand-logo">
+                <i data-lucide="shield-check"></i>
+            </div>
+            <span class="brand-text">Kaavalar</span>
+        </div>
+        <div class="nav-right">
+            <span class="status-pill">
+                <span class="status-dot"></span>
+                <span class="status-text">System Online</span>
+            </span>
+        </div>
+    </nav>
+
+    <main class="main-wrapper">
+        <header class="hero">
+            <div class="hero-content">
+                <div class="badge-pill">v2.5 Enterprise</div>
+                <h1 class="hero-title">
+                    Document Intelligence <br>
+                    <span class="text-gradient">Reimagined</span>
+                </h1>
+                <p class="hero-desc">Secure, AI-powered processing for your digital assets. Merge, split, edit, and secure PDFs with zero latency.</p>
+                
+                <div class="search-container">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="toolSearch" placeholder="Find a tool (e.g., 'Merge', 'Watermark', 'PPT')..." autocomplete="off">
+                    <div class="search-shortcut">⌘K</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="tools-grid" id="toolsGrid">
+            
+            <div class="tool-card" data-tags="merge combine join pdf">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-purple"><i data-lucide="layers"></i></div>
+                        <div class="card-meta">
+                            <h3>Merge PDFs</h3>
+                            <p>Combine multiple files</p>
+                        </div>
+                    </div>
+                    <form action="/merge" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="files" multiple required accept=".pdf" id="f-merge">
+                            <div class="drop-content">
+                                <i data-lucide="upload-cloud"></i>
+                                <span>Drop files here</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Merge Files</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="split separate break pdf">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-blue"><i data-lucide="scissors"></i></div>
+                        <div class="card-meta">
+                            <h3>Split PDF</h3>
+                            <p>Extract specific pages</p>
+                        </div>
+                    </div>
+                    <form action="/split" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-split">
+                            <div class="drop-content">
+                                <i data-lucide="file"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Split Now</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="compress shrink size reduce optimize">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-orange"><i data-lucide="minimize-2"></i></div>
+                        <div class="card-meta">
+                            <h3>Compress</h3>
+                            <p>Optimize file size</p>
+                        </div>
+                    </div>
+                    <form action="/compress" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-compress">
+                            <div class="drop-content">
+                                <i data-lucide="file-minus"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Optimize</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="image jpg png convert photo">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-pink"><i data-lucide="image"></i></div>
+                        <div class="card-meta">
+                            <h3>Img to PDF</h3>
+                            <p>Convert photos to docs</p>
+                        </div>
+                    </div>
+                    <form action="/img-to-pdf" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="files" multiple required accept="image/*" id="f-img">
+                            <div class="drop-content">
+                                <i data-lucide="images"></i>
+                                <span>Select Images</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Convert</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="word doc docx convert office">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-cyan"><i data-lucide="file-edit"></i></div>
+                        <div class="card-meta">
+                            <h3>PDF to Word</h3>
+                            <p>Convert to editable doc</p>
+                        </div>
+                    </div>
+                    <form action="/pdf-to-word" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-word">
+                            <div class="drop-content">
+                                <i data-lucide="file-text"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Convert</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="rotate turn orientation landscape portrait">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-green"><i data-lucide="rotate-cw"></i></div>
+                        <div class="card-meta">
+                            <h3>Rotate</h3>
+                            <p>Fix page orientation</p>
+                        </div>
+                    </div>
+                    <form action="/rotate" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-rotate">
+                            <div class="drop-content">
+                                <i data-lucide="refresh-cw"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <div class="select-wrap">
+                            <select name="rotation" class="input-field">
+                                <option value="90">90° Clockwise</option>
+                                <option value="180">180°</option>
+                                <option value="270">90° Counter-CW</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="select-arrow"></i>
+                        </div>
+                        <button type="submit" class="action-btn">Rotate</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="watermark stamp security protect">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-red"><i data-lucide="stamp"></i></div>
+                        <div class="card-meta">
+                            <h3>Watermark</h3>
+                            <p>Add branding or security</p>
+                        </div>
+                    </div>
+                    <form action="/watermark" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-water">
+                            <div class="drop-content">
+                                <i data-lucide="shield-check"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <input type="text" name="text" placeholder="Confidential..." required class="input-field">
+                        <button type="submit" class="action-btn">Apply Watermark</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card wide-card" data-tags="edit draw shapes text overlay">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-indigo"><i data-lucide="pen-tool"></i></div>
+                        <div class="card-meta">
+                            <h3>Pro Editor</h3>
+                            <p>Advanced overlay, shapes, and precision placement</p>
+                        </div>
+                    </div>
+                    <form action="/edit" method="post" enctype="multipart/form-data" id="editForm">
+                        <div class="editor-grid">
+                            <div class="drop-zone large">
+                                <input type="file" name="file" required accept=".pdf" id="f-edit">
+                                <div class="drop-content">
+                                    <i data-lucide="layout-template"></i>
+                                    <span>Upload Master PDF</span>
+                                </div>
+                            </div>
+                            
+                            <div class="editor-controls">
+                                <div class="select-wrap">
+                                    <select name="edit_type" id="edit_type" onchange="toggleFields()" class="input-field">
+                                        <option value="text">Add Text Overlay</option>
+                                        <option value="rect">Add Shape (Rect)</option>
+                                        <option value="image">Add Image Overlay</option>
+                                    </select>
+                                    <i data-lucide="chevron-down" class="select-arrow"></i>
+                                </div>
+
+                                <div id="textOnly" class="control-group">
+                                    <input type="text" name="text_content" placeholder="Content text" class="input-field">
+                                    <input type="number" name="size" value="20" class="input-field" placeholder="Size (px)">
+                                </div>
+                                
+                                <div id="imageOnly" style="display:none;" class="control-group">
+                                    <div class="drop-zone mini">
+                                        <input type="file" name="image" accept="image/*" id="f-overlay">
+                                        <div class="drop-content"><span>Choose Image</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="coord-inputs">
+                                    <input type="number" name="page" value="1" class="input-field" placeholder="Page">
+                                    <input type="color" name="color" value="#6366f1" class="color-picker">
+                                    <input type="number" name="x" value="100" class="input-field" placeholder="X">
+                                    <input type="number" name="y" value="100" class="input-field" placeholder="Y">
+                                </div>
+                                
+                                <div id="rectCoords" class="coord-inputs" style="display:none;">
+                                    <input type="number" name="x2" value="200" class="input-field" placeholder="Width">
+                                    <input type="number" name="y2" value="200" class="input-field" placeholder="Height">
+                                </div>
+
+                                <button type="submit" class="action-btn">Apply Changes</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="jpg image convert export">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-yellow"><i data-lucide="file-image"></i></div>
+                        <div class="card-meta">
+                            <h3>PDF to JPG</h3>
+                            <p>Export pages as images</p>
+                        </div>
+                    </div>
+                    <form action="/pdf-to-jpg" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-jpg">
+                            <div class="drop-content">
+                                <i data-lucide="image"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Convert</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="web url html capture site">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-teal"><i data-lucide="globe"></i></div>
+                        <div class="card-meta">
+                            <h3>Web to PDF</h3>
+                            <p>Capture website as PDF</p>
+                        </div>
+                    </div>
+                    <form action="/html-to-pdf" method="post">
+                        <input type="url" name="url" placeholder="https://example.com" required class="input-field mb-3">
+                        <button type="submit" class="action-btn">Capture Page</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="ppt powerpoint slide presentation image">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-orange"><i data-lucide="presentation"></i></div>
+                        <div class="card-meta">
+                            <h3>Img to PPT</h3>
+                            <p>Create slides from images</p>
+                        </div>
+                    </div>
+                    <form action="/image-to-ppt" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="files" multiple required accept="image/*" id="f-ppt">
+                            <div class="drop-content">
+                                <i data-lucide="monitor"></i>
+                                <span>Select Images</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Generate PPT</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="lock secure protect password encrypt">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-red"><i data-lucide="lock"></i></div>
+                        <div class="card-meta">
+                            <h3>Lock PDF</h3>
+                            <p>Encrypt with password</p>
+                        </div>
+                    </div>
+                    <form action="/add-password" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-lock">
+                            <div class="drop-content">
+                                <i data-lucide="lock"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <input type="password" name="password" placeholder="Set Password" required class="input-field">
+                        <button type="submit" class="action-btn">Encrypt</button>
+                    </form>
+                </div>
+            </div>
+
+             <div class="tool-card" data-tags="text ocr extract copy content">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-purple"><i data-lucide="file-text"></i></div>
+                        <div class="card-meta">
+                            <h3>Extract Text</h3>
+                            <p>Pull all text content</p>
+                        </div>
+                    </div>
+                    <form action="/extract-text" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-extract">
+                            <div class="drop-content">
+                                <i data-lucide="align-left"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Extract Now</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="redact hide censor security">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-pink"><i data-lucide="eye-off"></i></div>
+                        <div class="card-meta">
+                            <h3>Redact</h3>
+                            <p>Permanently hide text</p>
+                        </div>
+                    </div>
+                    <form action="/redact-text" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-redact">
+                            <div class="drop-content">
+                                <i data-lucide="eraser"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <input type="text" name="text" placeholder="Text to redact" required class="input-field">
+                        <button type="submit" class="action-btn">Redact</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="page numbers count footer header">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-blue"><i data-lucide="hash"></i></div>
+                        <div class="card-meta">
+                            <h3>Pagination</h3>
+                            <p>Add page numbers</p>
+                        </div>
+                    </div>
+                    <form action="/add-page-numbers" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-paginator">
+                            <div class="drop-content">
+                                <i data-lucide="list-ordered"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <div class="select-wrap">
+                            <select name="position" class="input-field">
+                                <option value="bottom-right">Bottom Right</option>
+                                <option value="bottom-center">Bottom Center</option>
+                                <option value="top-right">Top Right</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="select-arrow"></i>
+                        </div>
+                        <button type="submit" class="action-btn">Add Numbers</button>
+                    </form>
+                </div>
+            </div>
+            
+            </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-logo">
+                <i data-lucide="shield"></i>
+                <p>Kaavalar © 2026</p>
+            </div>
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">API Documentation</a>
+            </div>
+        </div>
+    </footer>
+
+    <div id="loader" class="loader-container">
+        <div class="loader-content">
+            <div class="spinner">
+                <div class="spinner-blade"></div>
+                <div class="spinner-blade"></div>
+                <div class="spinner-blade"></div>
+                <div class="spinner-blade"></div>
+                <div class="spinner-blade"></div>
+                <div class="spinner-blade"></div>
+                <div class="spinner-blade"></div>
+                <div class="spinner-blade"></div>
+            </div>
+            <p>Processing Data...</p>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+    <script>
+        lucide.createIcons();
+        function toggleFields() {
+            const type = document.getElementById('edit_type').value;
+            const textOnly = document.getElementById('textOnly');
+            const imageOnly = document.getElementById('imageOnly');
+            const rectCoords = document.getElementById('rectCoords');
+            
+            textOnly.style.display = (type === 'text') ? 'flex' : 'none';
+            imageOnly.style.display = (type === 'image') ? 'block' : 'none';
+            rectCoords.style.display = (type === 'rect' || type === 'image') ? 'grid' : 'none';
+        }
+    </script>
+</body>
+</html>
