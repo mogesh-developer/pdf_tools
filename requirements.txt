@@ -1,0 +1,9 @@
+Flask==3.0.0
+PyPDF2==3.0.1
+Pillow==10.1.0
+pdf2docx==0.5.6
+reportlab==4.0.7
+pymupdf==1.23.5
+pdfkit==1.0.0
+python-pptx==0.6.21
+gunicorn==21.2.0
