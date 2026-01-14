@@ -1,12 +1,12 @@
 
-from flask import Flask, request, send_file, render_template, redirect, url_for, abort
+from flask import Flask, request, send_file, render_template, redirect, url_for, abort, send_from_directory
 import os, uuid, shutil
 from utils.pdf_tools import merge_pdfs, split_pdf, compress_pdf, images_to_pdf, pdf_to_word, rotate_pdf, add_watermark, annotate_pdf, pdf_to_images, url_to_pdf, extract_text, add_password, remove_password, fill_form, redact_text, replace_text, add_highlight, add_text_stamp, edit_text_in_pdf, add_page_numbers, crop_pdf, reorder_pages, pdf_to_ppt, extract_pages
 from utils.ppt_tools import create_ppt_with_image, add_text_to_ppt
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
-UPLOAD_DIR = "uploads"
-OUTPUT_DIR = "outputs"
+UPLOAD_DIR = os.path.abspath("uploads")
+OUTPUT_DIR = os.path.abspath("outputs")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -14,6 +14,49 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 @app.route("/")
 def home():
     return render_template("index.html")
+
+@app.route("/editor")
+def editor_view():
+    filename = request.args.get('file')
+    if not filename:
+        return redirect(url_for('home'))
+    return render_template("editor.html", filename=filename)
+
+@app.route('/upload-for-edit', methods=['POST'])
+def upload_for_edit():
+    if 'file' not in request.files:
+        return redirect(url_for('home'))
+    file = request.files['file']
+    if file.filename == '':
+        return redirect(url_for('home'))
+    
+    filename = f"{uuid.uuid4()}_{file.filename}"
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    file.save(file_path)
+    return redirect(url_for('editor_view', file=filename))
+
+@app.route('/uploads/<path:filename>')
+def serve_upload(filename):
+    return send_from_directory(UPLOAD_DIR, filename)
+
+@app.route('/save-annotations', methods=['POST'])
+def save_annotations():
+    data = request.json
+    filename = data.get('filename')
+    annotations = data.get('annotations', [])
+    
+    input_path = os.path.join(UPLOAD_DIR, filename)
+    output_filename = f"edited_{uuid.uuid4()}.pdf"
+    output_path = os.path.join(OUTPUT_DIR, output_filename)
+    
+    # annotations should be a list of dicts: {type, page, x, y, content, color, size, etc.}
+    annotate_pdf(input_path, output_path, annotations)
+    
+    return {"status": "success", "downloadUrl": f"/outputs/{output_filename}"}
+
+@app.route('/outputs/<path:filename>')
+def serve_output(filename):
+    return send_from_directory(OUTPUT_DIR, filename)
 
 @app.route('/merge', methods=['POST'])
 def merge():

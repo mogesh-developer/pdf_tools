@@ -21,6 +21,16 @@
             <span class="brand-text">Kaavalar</span>
         </div>
         <div class="nav-right">
+            <div class="nav-stat-group">
+                <div class="nav-stat">
+                    <span class="stat-val">Low</span>
+                    <span class="stat-label">Latency</span>
+                </div>
+                <div class="nav-stat border-l">
+                    <span class="stat-val">256-bit</span>
+                    <span class="stat-label">AES</span>
+                </div>
+            </div>
             <span class="status-pill">
                 <span class="status-dot"></span>
                 <span class="status-text">System Online</span>
@@ -43,6 +53,12 @@
                     <input type="text" id="toolSearch" placeholder="Find a tool (e.g., 'Merge', 'Watermark', 'PPT')..." autocomplete="off">
                     <div class="search-shortcut">⌘K</div>
                 </div>
+
+                <div class="recent-files-bar" id="recentBar" style="display:none;">
+                    <span class="recent-label">Recent Sessions:</span>
+                    <div class="recent-list" id="recentList"></div>
+                    <button class="clear-recent" onclick="clearRecent()">Clear</button>
+                </div>
             </div>
         </header>
 
@@ -54,7 +70,7 @@
                     <div class="card-header">
                         <div class="icon-tile tile-purple"><i data-lucide="layers"></i></div>
                         <div class="card-meta">
-                            <h3>Merge PDFs</h3>
+                            <h3 data-tooltip="Join multiple PDFs into one document in seconds.">Merge PDFs</h3>
                             <p>Combine multiple files</p>
                         </div>
                     </div>
@@ -77,7 +93,7 @@
                     <div class="card-header">
                         <div class="icon-tile tile-blue"><i data-lucide="scissors"></i></div>
                         <div class="card-meta">
-                            <h3>Split PDF</h3>
+                            <h3 data-tooltip="Separate pages into individual files or extract a range.">Split PDF</h3>
                             <p>Extract specific pages</p>
                         </div>
                     </div>
@@ -218,14 +234,37 @@
                 </div>
             </div>
 
+            <div class="tool-card wide-card" data-tags="live editor drag drop visual preview">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-indigo"><i data-lucide="monitor-play"></i></div>
+                        <div class="card-meta">
+                            <h3>Live PDF Editor <span class="badge-pill" style="margin:0; font-size: 0.6rem; padding: 2px 6px;">New</span></h3>
+                            <p>Drag & drop editing, visual resizing, and real-time annotations</p>
+                        </div>
+                    </div>
+                    <form action="/upload-for-edit" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone large">
+                            <input type="file" name="file" required accept=".pdf" id="f-live-edit">
+                            <div class="drop-content">
+                                <i data-lucide="layout"></i>
+                                <span>Upload PDF to Start Live Editing</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Open in Live Editor</button>
+                    </form>
+                </div>
+            </div>
+
             <div class="tool-card wide-card" data-tags="edit draw shapes text overlay">
                 <div class="card-border"></div>
                 <div class="card-inner">
                     <div class="card-header">
                         <div class="icon-tile tile-indigo"><i data-lucide="pen-tool"></i></div>
                         <div class="card-meta">
-                            <h3>Pro Editor</h3>
-                            <p>Advanced overlay, shapes, and precision placement</p>
+                            <h3>Batch Annotator</h3>
+                            <p>Advanced overlay via precision placement coordinates</p>
                         </div>
                     </div>
                     <form action="/edit" method="post" enctype="multipart/form-data" id="editForm">
@@ -476,6 +515,8 @@
             <p>Processing Data...</p>
         </div>
     </div>
+
+    <div id="toast-container" class="toast-container"></div>
 
     <script src="/static/script.js"></script>
     <script>

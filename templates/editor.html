@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaavalar | Live PDF Editor</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="editor-body">
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="/" class="brand-link">
+                <div class="brand-logo"><i data-lucide="arrow-left"></i></div>
+                <span class="brand-text">Exit Editor</span>
+            </a>
+        </div>
+        <div class="editor-toolbar">
+            <button class="tool-btn active" id="tool-select" title="Select"><i data-lucide="mouse-pointer"></i></button>
+            <button class="tool-btn" id="tool-text" title="Add Text"><i data-lucide="type"></i></button>
+            <button class="tool-btn" id="tool-rect" title="Add Shape"><i data-lucide="square"></i></button>
+            <div class="toolbar-divider"></div>
+            <input type="color" id="color-picker" value="#6366f1" class="color-picker-mini">
+            <select id="font-size" class="size-select">
+                <option value="12">12px</option>
+                <option value="16">16px</option>
+                <option value="20" selected>20px</option>
+                <option value="24">24px</option>
+                <option value="32">32px</option>
+                <option value="48">48px</option>
+            </select>
+        </div>
+        <div class="nav-right">
+            <button id="save-btn" class="action-btn-sm primary">
+                <i data-lucide="save"></i> Save Changes
+            </button>
+        </div>
+    </nav>
+
+    <div class="editor-container">
+        <aside class="thumbnail-sidebar" id="thumbnail-sidebar">
+            <!-- Thumbnails will be injected here -->
+        </aside>
+
+        <main class="workbench">
+            <div id="pdf-container" class="pdf-viewer">
+                <canvas id="pdf-canvas"></canvas>
+                <canvas id="annotation-canvas"></canvas>
+            </div>
+            
+            <div class="page-controls">
+                <button id="prev-page" class="page-nav-btn"><i data-lucide="chevron-left"></i></button>
+                <span class="page-info">Page <span id="page-num">1</span> of <span id="page-count">-</span></span>
+                <button id="next-page" class="page-nav-btn"><i data-lucide="chevron-right"></i></button>
+            </div>
+        </main>
+
+        <aside class="properties-panel">
+            <div class="panel-header">Properties</div>
+            <div id="no-selection" class="empty-state">Select an object to edit its properties</div>
+            <div id="text-properties" style="display:none;" class="prop-group">
+                <label>Text Content</label>
+                <textarea id="prop-text-content" class="input-field-sm"></textarea>
+            </div>
+            <div id="rect-properties" style="display:none;" class="prop-group">
+                <label>Dimensions</label>
+                <div class="coord-grid">
+                    <div><span>W</span><input type="number" id="prop-w" class="input-field-sm"></div>
+                    <div><span>H</span><input type="number" id="prop-h" class="input-field-sm"></div>
+                </div>
+            </div>
+            <button id="delete-btn" class="delete-btn" style="display:none;">Delete Object</button>
+        </aside>
+    </div>
+
+    <div id="editor-loader" class="loader-container">
+        <div class="loader-content">
+            <div class="spinner">
+                <div class="spinner-blade"></div>
+                <div class="spinner-blade"></div>
+                <div class="spinner-blade"></div>
+                <div class="spinner-blade"></div>
+            </div>
+            <p id="loader-msg">Initializing Workspace...</p>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        window.PDF_FILENAME = "{{ filename }}";
+    </script>
+    <script src="/static/editor.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
