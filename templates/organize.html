@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organize PDF | PDF Master</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+</head>
+<body class="editor-body">
+    <header class="editor-header">
+        <div class="logo-group">
+            <a href="/" class="icon-btn tooltipped" data-tooltip="Exit Editor"><i data-lucide="x"></i></a>
+            <h1>Organize: {{ filename }}</h1>
+        </div>
+        <div class="toolbar-actions">
+            <button id="save-organize" class="btn btn-primary" title="Apply Changes">
+                <i data-lucide="save"></i> Save Changes
+            </button>
+        </div>
+    </header>
+
+    <main class="organize-container">
+        <div id="organize-grid" class="organize-grid">
+            <!-- Thumbnails will be injected here -->
+        </div>
+    </main>
+
+    <div id="editor-loader" class="loader-overlay">
+        <div class="loader-spinner"></div>
+        <p>Loading pages...</p>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        window.PDF_FILENAME = "{{ filename }}";
+    </script>
+    <script src="{{ url_for('static', filename='organize.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live PPT Editor | Kaavalar AI</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .template-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            padding: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .template-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--brand-primary);
+            transform: scale(1.02);
+        }
+        .template-card.active {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+        }
+        .template-card .icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-surface);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--brand-primary);
+            font-size: 1.25rem;
+        }
+
+        .editor-container {
+            display: flex;
+            height: calc(100vh - 68px);
+            overflow: hidden;
+            position: relative;
+            z-index: 10;
+        }
+        .slide-navigator {
+            width: 280px;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--card-border);
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .editor-controls {
+            width: 400px;
+            padding: 2rem;
+            overflow-y: auto;
+            background: rgba(3, 3, 5, 0.4);
+            backdrop-filter: blur(12px);
+            border-right: 1px solid var(--card-border);
+        }
+        .preview-area {
+            flex: 1;
+            padding: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .slide-preview {
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 16 / 9;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5), 0 18px 36px -18px rgba(0, 0, 0, 0.5);
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            color: #1a1a1a;
+        }
+        .page-item {
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .page-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        .page-item.active {
+            background: var(--brand-primary);
+            border-color: var(--brand-primary);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        .page-item.active .page-num, 
+        .page-item.active .page-title {
+            color: white;
+        }
+        .page-num {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-tertiary);
+        }
+        .page-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+        .control-group { margin-bottom: 1.5rem; }
+        
+        .add-slide-btn {
+            background: transparent;
+            border: 2px dashed var(--card-border);
+            color: var(--text-secondary);
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .add-slide-btn:hover {
+            border-color: var(--brand-primary);
+            color: var(--brand-primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        /* Light-theme overrides for the actual PPT Preview */
+        #previewTitle { font-family: 'Outfit', sans-serif; }
+        #previewBody { line-height: 1.6; }
+    </style>
+</head>
+<body class="bg-[#030305] text-white font-['Plus_Jakarta_Sans']">
+    <div class="fx-noise"></div>
+    <div class="fx-blob blob-1"></div>
+    <div class="fx-blob blob-2"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar relative z-50">
+        <div class="nav-brand">
+            <div class="brand-logo">
+                <i data-lucide="presentation"></i>
+            </div>
+            <span class="brand-text">Kaavalar <span class="text-secondary" style="color: var(--brand-secondary)">PRO</span></span>
+        </div>
+        <div class="nav-right">
+            <button onclick="downloadPPT()" class="action-btn" style="width: auto; padding: 0.7rem 1.5rem; font-size: 0.9rem;">
+                <i class="fas fa-file-export mr-2"></i> Export Presentation
+            </button>
+        </div>
+    </nav>
+
+    <div class="editor-container">
+        <!-- Sidebar: Slide Navigator -->
+        <aside class="slide-navigator">
+            <span class="section-label">Presentation Slides</span>
+            <div id="slideList" class="flex flex-col gap-3">
+                <!-- Slides will be added here -->
+            </div>
+            <button onclick="addNewSlide()" class="add-slide-btn">
+                <i class="fas fa-plus-circle"></i> Add New Slide
+            </button>
+            <div class="mt-auto pt-6 border-t border-white/5">
+                <button onclick="loadSampleData()" class="text-[10px] text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest font-bold">
+                    <i class="fas fa-magic mr-1"></i> Load Sample Content
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content: Editor Split View -->
+        <main class="flex flex-1 overflow-hidden">
+            <!-- Left: Form Controls -->
+            <div class="editor-controls">
+                <div id="editorContent" class="space-y-6">
+                    <div class="glass-panel p-6 rounded-2xl shadow-sm">
+                        <h2 class="text-xl font-bold text-white mb-6">Design Panel</h2>
+                        
+                        <div class="control-group">
+                            <label class="section-label">Style Selection</label>
+                            <div id="templateGrid" class="grid grid-cols-1 gap-3 mb-4">
+                                <!-- Populated by JS -->
+                            </div>
+                            <div class="select-wrap hidden">
+                                <select id="templateSelect" onchange="changeTemplate()" class="input-field">
+                                    <!-- Options populated by JS -->
+                                </select>
+                                <i data-lucide="layout" class="select-arrow" style="right: 10px"></i>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="section-label">Slide Layout</label>
+                            <div class="select-wrap">
+                                <select id="layoutSelect" onchange="updateLayoutFields()" class="input-field">
+                                    <!-- Options populated by JS -->
+                                </select>
+                                <i data-lucide="chevron-down" class="select-arrow"></i>
+                            </div>
+                        </div>
+
+                        <div id="dynamicFields" class="space-y-4">
+                            <!-- Fields populated by JS based on layout -->
+                        </div>
+
+                        <div class="pt-6 border-t border-white/5 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <label class="section-label mb-0">Slide Background</label>
+                                <input type="color" id="slideBgColor" onchange="updateSlideMeta()" class="w-10 h-10 border-none bg-transparent cursor-pointer">
+                            </div>
+
+                            <div class="control-group">
+                                <label class="section-label">Speaker Notes</label>
+                                <textarea id="speakerNotes" oninput="updateSlideMeta()" class="input-field" rows="3" placeholder="Add notes for this slide..."></textarea>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="isCodeSlide" onchange="toggleCodeMode()" class="w-5 h-5 accent-indigo-500 rounded cursor-pointer">
+                                <label for="isCodeSlide" class="text-sm font-semibold text-slate-300 cursor-pointer">Smart Code Highlighting</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Live Preview -->
+            <div class="preview-area">
+                <div class="slide-preview" id="previewContainer">
+                    <div id="previewTitle" class="text-4xl font-extrabold text-slate-900 mb-6 border-b-4 border-indigo-500 pb-2 inline-block max-w-max">Slide Title</div>
+                    <div id="previewBody" class="text-xl text-slate-700 flex-1 whitespace-pre-wrap font-medium">Your slide content will appear here...</div>
+                    <div id="previewImage" class="absolute inset-x-8 bottom-8 top-1/2 bg-slate-100 flex items-center justify-center rounded-xl border-2 border-dashed border-slate-300 hidden">
+                        <i class="fas fa-image text-4xl text-slate-300"></i>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let layouts = [];
+        let slides = [];
+        let templates = [];
+        let activeSlideIndex = 0;
+        let activeTemplate = 'corporate';
+
+        async function init() {
+            // Fetch Templates
+            const tResp = await fetch('/ppt-templates');
+            templates = await tResp.json();
+            
+            const tGrid = document.getElementById('templateGrid');
+            const tSelect = document.getElementById('templateSelect');
+            
+            templates.forEach(t => {
+                // Populate hidden select for backward compatibility
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+                tSelect.appendChild(opt);
+
+                // Populate Visual Grid
+                const card = document.createElement('div');
+                card.className = `template-card ${t === activeTemplate ? 'active' : ''}`;
+                card.id = `template-${t}`;
+                card.onclick = () => selectTemplate(t);
+                
+                let icon = 'briefcase';
+                if(t === 'creative') icon = 'palette';
+                if(t === 'minimal') icon = 'feather';
+
+                card.innerHTML = `
+                    <div class="icon"><i class="fas fa-${icon}"></i></div>
+                    <div class="flex-1">
+                        <div class="text-sm font-bold text-white">${t.charAt(0).toUpperCase() + t.slice(1)}</div>
+                        <div class="text-[10px] text-white/40">Professional ${t} layout</div>
+                    </div>
+                `;
+                tGrid.appendChild(card);
+            });
+
+            await fetchLayouts();
+            addNewSlide();
+            lucide.createIcons();
+        }
+
+        function selectTemplate(t) {
+            document.querySelectorAll('.template-card').forEach(c => c.classList.remove('active'));
+            document.getElementById(`template-${t}`).classList.add('active');
+            document.getElementById('templateSelect').value = t;
+            changeTemplate();
+        }
+
+        async function fetchLayouts() {
+            const resp = await fetch(`/ppt-layouts?template=${activeTemplate}`);
+            layouts = await resp.json();
+            
+            const layoutSelect = document.getElementById('layoutSelect');
+            layoutSelect.innerHTML = '';
+            layouts.forEach(l => {
+                const opt = document.createElement('option');
+                opt.value = l.index;
+                opt.textContent = l.name;
+                layoutSelect.appendChild(opt);
+            });
+        }
+
+        async function changeTemplate() {
+            activeTemplate = document.getElementById('templateSelect').value;
+            await fetchLayouts();
+            // Reset active slide layout to 0 for the new template
+            slides[activeSlideIndex].layout_index = 0;
+            updateLayoutFields();
+        }
+
+        function addNewSlide() {
+            const newSlide = {
+                layout_index: 0,
+                content: {
+                    title: "New Slide",
+                    body: "Start typing...",
+                },
+                is_code: false,
+                bg_color: '#ffffff',
+                notes: ''
+            };
+            slides.push(newSlide);
+            activeSlideIndex = slides.length - 1;
+            renderSlideList();
+            loadSlideIntoEditor();
+        }
+
+        function renderSlideList() {
+            const list = document.getElementById('slideList');
+            list.innerHTML = '';
+            slides.forEach((s, i) => {
+                const div = document.createElement('div');
+                div.className = `page-item ${i === activeSlideIndex ? 'active' : ''}`;
+                div.innerHTML = `
+                    <span class="page-num">${String(i + 1).padStart(2, '0')}</span>
+                    <span class="page-title">${s.content.title || 'Untitled Slide'}</span>
+                    <button onclick="event.stopPropagation(); deleteSlide(${i})" class="text-slate-500 hover:text-red-400 transition-colors p-1">
+                        <i class="fas fa-trash-alt text-xs"></i>
+                    </button>
+                `;
+                div.onclick = () => {
+                    activeSlideIndex = i;
+                    renderSlideList();
+                    loadSlideIntoEditor();
+                };
+                list.appendChild(div);
+            });
+        }
+
+        function loadSlideIntoEditor() {
+            const s = slides[activeSlideIndex];
+            document.getElementById('layoutSelect').value = s.layout_index;
+            document.getElementById('isCodeSlide').checked = s.is_code;
+            document.getElementById('slideBgColor').value = s.bg_color || '#ffffff';
+            document.getElementById('speakerNotes').value = s.notes || '';
+            updateLayoutFields();
+            syncPreview();
+        }
+
+        function updateLayoutFields() {
+            const slide = slides[activeSlideIndex];
+            slide.layout_index = parseInt(document.getElementById('layoutSelect').value);
+            const layout = layouts[slide.layout_index] || layouts[0];
+            const dynamicFields = document.getElementById('dynamicFields');
+            dynamicFields.innerHTML = '';
+
+            layout.placeholders.forEach(ph => {
+                const holder = document.createElement('div');
+                holder.className = "control-group";
+                
+                let inputHtml = '';
+                const phKey = ph.name.toLowerCase();
+                const currentVal = slide.content[ph.idx] || slide.content[phKey] || '';
+
+                if (ph.name.includes("Title")) {
+                    inputHtml = `<input type="text" placeholder="Enter ${ph.name}..." value="${currentVal}" oninput="updateContent(${ph.idx}, this.value)" class="input-field">`;
+                } else if (ph.name.includes("Picture")) {
+                    inputHtml = `
+                        <div class="drop-zone-mini">
+                            <input type="file" accept="image/*" onchange="handleImageUpload(${ph.idx}, this)">
+                            <div class="drop-content">
+                                <i class="fas fa-cloud-upload-alt text-lg"></i>
+                                <span class="text-xs">Upload Image</span>
+                            </div>
+                        </div>`;
+                } else {
+                    inputHtml = `<textarea rows="5" placeholder="Enter ${ph.name}..." oninput="updateContent(${ph.idx}, this.value)" class="input-field" style="resize: none;">${currentVal}</textarea>`;
+                }
+
+                holder.innerHTML = `
+                    <label class="section-label">${ph.name}</label>
+                    ${inputHtml}
+                `;
+                dynamicFields.appendChild(holder);
+            });
+            syncPreview();
+        }
+
+        function updateContent(idx, val) {
+            slides[activeSlideIndex].content[idx] = val;
+            const layout = layouts[slides[activeSlideIndex].layout_index] || layouts[0];
+            const ph = layout.placeholders.find(p => p.idx === idx);
+            if (ph && ph.name.includes("Title")) slides[activeSlideIndex].content.title = val;
+            if (ph && (ph.name.includes("Text") || ph.name.includes("Body"))) slides[activeSlideIndex].content.body = val;
+
+            syncPreview();
+            renderSlideList();
+        }
+
+        function updateSlideMeta() {
+            const s = slides[activeSlideIndex];
+            s.bg_color = document.getElementById('slideBgColor').value;
+            s.notes = document.getElementById('speakerNotes').value;
+            syncPreview();
+        }
+
+        async function handleImageUpload(idx, input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                slides[activeSlideIndex].content[idx] = e.target.result;
+                syncPreview();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function toggleCodeMode() {
+            slides[activeSlideIndex].is_code = document.getElementById('isCodeSlide').checked;
+            syncPreview();
+        }
+
+        function syncPreview() {
+            const s = slides[activeSlideIndex];
+            const preview = document.getElementById('previewContainer');
+            document.getElementById('previewTitle').textContent = s.content.title || "Slide Title";
+            document.getElementById('previewBody').textContent = s.content.body || "Your content here...";
+            
+            // Set preview background
+            preview.style.backgroundColor = s.bg_color || '#ffffff';
+
+            if (s.is_code) {
+                document.getElementById('previewBody').className = "text-sm font-mono p-4 bg-slate-900 text-green-400 rounded-lg flex-1 overflow-auto";
+            } else {
+                document.getElementById('previewBody').className = "text-lg text-slate-700 flex-1 whitespace-pre-wrap font-medium";
+            }
+
+            const hasImg = Object.values(s.content).some(v => typeof v === 'string' && v.startsWith('data:image'));
+            document.getElementById('previewImage').classList.toggle('hidden', !hasImg);
+        }
+
+        async function downloadPPT() {
+            const btn = event.currentTarget;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Compiling...';
+
+            try {
+                const resp = await fetch('/ppt-generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slides, template_name: activeTemplate })
+                });
+                const res = await resp.json();
+                if (res.status === 'success') {
+                    window.location.href = res.downloadUrl;
+                }
+            } catch (err) {
+                alert("Error generating PPT");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-file-export mr-2"></i> Export Presentation';
+            }
+        }
+
+        function deleteSlide(idx) {
+            if (slides.length <= 1) return;
+            slides.splice(idx, 1);
+            if (activeSlideIndex >= slides.length) activeSlideIndex = slides.length - 1;
+            renderSlideList();
+            loadSlideIntoEditor();
+        }
+
+        function loadSampleData() {
+            slides = [
+                {
+                    layout_index: 0,
+                    content: { title: "Executive Strategy 2026", body: "Propelling Innovation Through Kaavalar AI Solutions" },
+                    is_code: false, bg_color: '#0f172a', notes: 'Start with high energy.'
+                },
+                {
+                    layout_index: 1,
+                    content: { title: "Technical Architecture", body: "def analyze_security(data):\n    return \"Secured by Kaavalar\"\n\n# Dynamic PPT Generation Engine" },
+                    is_code: true, bg_color: '#ffffff', notes: 'Explain the core logic here.'
+                }
+            ];
+            activeSlideIndex = 0;
+            renderSlideList();
+            loadSlideIntoEditor();
+        }
+
+        init();
+    </script>
+</body>
+</html>

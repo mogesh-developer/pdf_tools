@@ -64,6 +64,34 @@
 
         <div class="tools-grid" id="toolsGrid">
             
+            <!-- Live PPT Editor (PRO) -->
+            <div class="tool-card pro-feature group" data-tags="powerpoint ppt pptx presentation editor slide designer">
+                <div class="card-border border-orange-500/20 group-hover:border-orange-500/50 transition-colors"></div>
+                <div class="card-inner overflow-hidden">
+                    <div class="card-header">
+                        <div class="icon-tile tile-orange"><i data-lucide="presentation"></i></div>
+                        <div class="badge-new bg-gradient-to-r from-orange-500 to-red-500 text-white border-none shadow-lg shadow-orange-500/20">PRO</div>
+                        <div class="card-meta">
+                            <h3>Live PPT Designer</h3>
+                            <p>Build stunning slides</p>
+                        </div>
+                    </div>
+                    <div class="p-8 relative">
+                        <div class="feature-preview mb-6">
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span class="px-2 py-1 bg-white/5 rounded text-[10px] text-white/50 border border-white/5">Auto-Fit</span>
+                                <span class="px-2 py-1 bg-white/5 rounded text-[10px] text-white/50 border border-white/5">Code FX</span>
+                                <span class="px-2 py-1 bg-white/5 rounded text-[10px] text-white/50 border border-white/5">Templates</span>
+                            </div>
+                            <div class="text-white/30 text-xs italic leading-relaxed">"Build, style, and export professional decks in seconds..."</div>
+                        </div>
+                        <a href="/ppt-editor" class="action-btn w-full text-center py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl font-bold shadow-lg shadow-orange-500/20 transition-all duration-300 transform group-hover:-translate-y-1 block ring-2 ring-orange-500/20 hover:ring-orange-500/40">
+                            Launch Designer
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             <div class="tool-card" data-tags="merge combine join pdf">
                 <div class="card-border"></div>
                 <div class="card-inner">
@@ -381,6 +409,26 @@
                 </div>
             </div>
 
+            <div class="tool-card" data-tags="ppt powerpoint live editor create slides">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-amber"><i data-lucide="layout-template"></i></div>
+                        <div class="card-meta">
+                            <h3>PPT Live Editor</h3>
+                            <p>Design slides in real-time</p>
+                        </div>
+                    </div>
+                    <div class="drop-zone no-file">
+                        <div class="drop-content">
+                            <i data-lucide="pen-tool"></i>
+                            <span>Open Template Editor</span>
+                        </div>
+                    </div>
+                    <a href="/ppt-editor" class="action-btn text-center" style="display: block; text-decoration: none;">Launch Editor</a>
+                </div>
+            </div>
+
             <div class="tool-card" data-tags="lock secure protect password encrypt">
                 <div class="card-border"></div>
                 <div class="card-inner">
@@ -452,6 +500,99 @@
                 </div>
             </div>
 
+            <div class="tool-card" data-tags="unlock remove password security decrypt">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-red"><i data-lucide="unlock"></i></div>
+                        <div class="card-meta">
+                            <h3 data-tooltip="Remove password protection and restrictions from your PDF.">Unlock PDF</h3>
+                            <p>Remove security & password</p>
+                        </div>
+                    </div>
+                    <form action="/remove-password" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-unlock">
+                            <div class="drop-content">
+                                <i data-lucide="unlock"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <input type="password" name="password" placeholder="Current Password" required class="input-field">
+                        <button type="submit" class="action-btn">Unlock Now</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="excel xlsx convert table data">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-green"><i data-lucide="file-spreadsheet"></i></div>
+                        <div class="card-meta">
+                            <h3 data-tooltip="Extract tables from PDF and convert them to editable Excel sheets.">PDF to Excel</h3>
+                            <p>Convert to spreadsheet</p>
+                        </div>
+                    </div>
+                    <form action="/pdf-to-excel" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-excel">
+                            <div class="drop-content">
+                                <i data-lucide="table"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Convert to Excel</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="esign sign signature initial electronic">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-indigo"><i data-lucide="pen-tool"></i></div>
+                        <div class="card-meta">
+                            <h3 data-tooltip="Sign your documents electronically with a hand-drawn or uploaded signature.">eSign PDF</h3>
+                            <p>Add electronic signature</p>
+                        </div>
+                    </div>
+                    <form action="/upload-for-esign" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-esign">
+                            <div class="drop-content">
+                                <i data-lucide="signature"></i>
+                                <span>Select PDF to Sign</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Sign Document</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="organize reorder delete rotate pages">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-purple"><i data-lucide="layout-grid"></i></div>
+                        <div class="card-meta">
+                            <h3 data-tooltip="Visually reorder, rotate, or delete pages from your PDF.">Organize PDF</h3>
+                            <p>Visual page management</p>
+                        </div>
+                    </div>
+                    <form action="/upload-for-organize" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-organize">
+                            <div class="drop-content">
+                                <i data-lucide="grid"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Organize Pages</button>
+                    </form>
+                </div>
+            </div>
+
             <div class="tool-card" data-tags="page numbers count footer header">
                 <div class="card-border"></div>
                 <div class="card-inner">
@@ -479,6 +620,132 @@
                             <i data-lucide="chevron-down" class="select-arrow"></i>
                         </div>
                         <button type="submit" class="action-btn">Add Numbers</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="compare difference diff version legal contract">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-red"><i data-lucide="diff"></i></div>
+                        <div class="card-meta">
+                            <h3 data-tooltip="Compare two versions of a contract and see the differences highlighted.">PDF Comparison</h3>
+                            <p>Visual version diff</p>
+                        </div>
+                    </div>
+                    <form action="/compare" method="post" enctype="multipart/form-data">
+                        <div class="multi-upload-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
+                            <div class="drop-zone-mini">
+                                <input type="file" name="file1" required accept=".pdf">
+                                <span style="font-size: 0.7rem;">Old Version</span>
+                            </div>
+                            <div class="drop-zone-mini">
+                                <input type="file" name="file2" required accept=".pdf">
+                                <span style="font-size: 0.7rem;">New Version</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Compare Docs</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="redact privacy sensitive email credit card regex">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-black" style="background: #1e293b;"><i data-lucide="eye-off"></i></div>
+                        <div class="card-meta">
+                            <h3 data-tooltip="Automatically find and redact sensitive info like emails and credit cards.">Smart Redact</h3>
+                            <p>Instant privacy filter</p>
+                        </div>
+                    </div>
+                    <form action="/smart-redact" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-smart-redact">
+                            <div class="drop-content">
+                                <i data-lucide="shield-check"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <div class="select-wrap">
+                            <select name="patterns" class="input-field" multiple style="height: auto; min-height: 40px; padding: 5px;">
+                                <option value="email" selected>Emails</option>
+                                <option value="credit_card" selected>Credit Cards</option>
+                                <option value="phone">Phone Numbers</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="action-btn">Scan & Redact</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Student & Academic Utilities -->
+            <div class="tool-card" data-tags="scan fake student assignment proof grayscale">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-amber" style="background: #f59e0b;"><i data-lucide="printer"></i></div>
+                        <div class="card-meta">
+                            <h3 data-tooltip="Make digital PDFs look like they were physically scanned with noise and rotation.">Fake Scan</h3>
+                            <p>Assignment proof effect</p>
+                        </div>
+                    </div>
+                    <form action="/fake-scan" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-fake-scan">
+                            <div class="drop-content">
+                                <i data-lucide="scan"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Scanify</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="booklet print imposition fold academic booklet">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-emerald" style="background: #10b981;"><i data-lucide="book-open"></i></div>
+                        <div class="card-meta">
+                            <h3 data-tooltip="Reorder pages so they can be folded and stapled into a physical booklet.">Booklet Maker</h3>
+                            <p>Print-ready imposition</p>
+                        </div>
+                    </div>
+                    <form action="/make-booklet" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-booklet">
+                            <div class="drop-content">
+                                <i data-lucide="book"></i>
+                                <span>Select PDF</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Make Booklet</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tool-card" data-tags="clean clear remove highlights notes textbook">
+                <div class="card-border"></div>
+                <div class="card-inner">
+                    <div class="card-header">
+                        <div class="icon-tile tile-indigo" style="background: #6366f1;"><i data-lucide="eraser"></i></div>
+                        <div class="card-meta">
+                            <h3 data-tooltip="Strip all highlights, notes, and drawings from a shared PDF or textbook.">Clean PDF</h3>
+                            <p>Remove annotations</p>
+                        </div>
+                    </div>
+                    <form action="/remove-annotations" method="post" enctype="multipart/form-data">
+                        <div class="drop-zone">
+                            <input type="file" name="file" required accept=".pdf" id="f-clean">
+                            <div class="drop-content">
+                                <i data-lucide="sparkles"></i>
+                                <span>Select PDF to Clean</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">Clear All Notes</button>
                     </form>
                 </div>
             </div>

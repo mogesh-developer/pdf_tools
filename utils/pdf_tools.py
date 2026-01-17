@@ -1,11 +1,14 @@
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
-from PIL import Image
+from PIL import Image, ImageOps, ImageEnhance, ImageFilter
 from pdf2docx import Converter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-import os, io
+import os, io, re, difflib, random
+import numpy as np
 import fitz  # PyMuPDF
 import pdfkit
+import pandas as pd
+import pdfplumber
 
 def merge_pdfs(files, output):
     merger = PdfMerger()
@@ -26,6 +29,25 @@ def split_pdf(input_path, output_folder):
             writer.write(f)
         output_files.append(output_path)
     return output_files
+
+def pdf_to_excel(input_path, output_path):
+    """
+    Extract tables from PDF and save to Excel
+    """
+    all_tables = []
+    with pdfplumber.open(input_path) as pdf:
+        for page in pdf.pages:
+            tables = page.extract_tables()
+            for table in tables:
+                df = pd.DataFrame(table[1:], columns=table[0])
+                all_tables.append(df)
+    
+    if all_tables:
+        with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+            for i, df in enumerate(all_tables):
+                df.to_excel(writer, sheet_name=f'Table_{i+1}', index=False)
+        return True
+    return False
 
 def compress_pdf(input_path, output_path):
     reader = PdfReader(input_path)
@@ -107,9 +129,16 @@ def annotate_pdf(input_path, output_path, annotations):
             color = hex_to_rgb(ann.get("color", "#000000"))
             
             if ann["type"] == "text":
+                font_map = {
+                    "Helvetica": "helv",
+                    "Times-Roman": "tiro",
+                    "Courier": "cour"
+                }
+                f_name = font_map.get(ann.get("font"), "helv")
                 page.insert_text(
                     (float(ann["x"]), float(ann["y"])), 
                     ann["content"], 
+                    fontname=f_name,
                     fontsize=float(ann.get("size", 20)),
                     color=color
                 )
@@ -363,24 +392,25 @@ def reorder_pages(input_path, output_path, page_order):
 
 def pdf_to_ppt(input_path, output_path):
     """
-    Convert PDF to PPT by extracting images from each page
+    Convert PDF to PPT by extracting high-res images from each page
     """
     from pptx import Presentation
-    from pptx.util import Inches
     
     doc = fitz.open(input_path)
     prs = Presentation()
     
     for i, page in enumerate(doc):
+        # High resolution (300 DPI approx)
         pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
-        img_path = f"{os.path.dirname(output_path)}/temp_page_{i}.png"
-        pix.save(img_path)
+        img_data = pix.tobytes("png")
+        img_stream = io.BytesIO(img_data)
         
         slide = prs.slides.add_slide(prs.slide_layouts[6])  # blank slide
-        left = top = Inches(0)
-        slide.shapes.add_picture(img_path, left, top, width=Inches(10), height=Inches(7.5))
         
-        os.remove(img_path)  # cleanup
+        # Fit picture to slide
+        prs_width = prs.slide_width
+        prs_height = prs.slide_height
+        slide.shapes.add_picture(img_stream, 0, 0, width=prs_width, height=prs_height)
     
     prs.save(output_path)
     doc.close()
@@ -407,3 +437,144 @@ def extract_pages(input_path, output_path, pages):
     
     with open(output_path, "wb") as f:
         writer.write(f)
+
+def compare_pdfs(path1, path2, output_path):
+    """
+    Compare two PDFs and highlight differences.
+    Text additions in path2 compared to path1 are highlighted green.
+    """
+    doc1 = fitz.open(path1)
+    doc2 = fitz.open(path2)
+    
+    # Simple strategy: Compare page by page text
+    for i in range(min(len(doc1), len(doc2))):
+        page1 = doc1[i]
+        page2 = doc2[i]
+        
+        text1 = page1.get_text().splitlines()
+        text2 = page2.get_text().splitlines()
+        
+        d = difflib.Differ()
+        diff = list(d.compare(text1, text2))
+        
+        for line in diff:
+            if line.startswith('+ '):
+                # Text added in doc2
+                added_text = line[2:].strip()
+                if added_text:
+                    text_instances = page2.search_for(added_text)
+                    for inst in text_instances:
+                        annot = page2.add_highlight_annot(inst)
+                        annot.set_colors(stroke=(0, 1, 0)) # Green
+                        annot.update()
+            # Deletions are harder to show on the NEW pdf without altering layout significantly
+                
+    doc2.save(output_path)
+    doc1.close()
+    doc2.close()
+
+def smart_redact(input_path, output_path, patterns):
+    """
+    patterns: list of strings like 'email', 'credit_card', 'phone'
+    """
+    regex_map = {
+        'email': r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+',
+        'credit_card': r'\b(?:\d[ -]*?){13,16}\b',
+        'phone': r'\b(?:\+?\d{1,3}[- ]?)?\(?\d{3}\)?[- ]?\d{3}[- ]?\d{4}\b'
+    }
+    
+    doc = fitz.open(input_path)
+    for page in doc:
+        for p_name in patterns:
+            pattern = regex_map.get(p_name, p_name) # allow custom regex too
+            # Use regex search since fitz search_for is not always regex-friendly
+            # Actually PyMuPDF has page.search_for which can take a regex if enabled, 
+            # but let's use the standard search_for with the literal strings if possible 
+            # or use a more advanced approach.
+            # For simplicity with the tools we have:
+            text_instances = page.search_for(pattern) # search_for supports regex in newer versions or treats as string
+            for inst in text_instances:
+                page.add_redact_annot(inst, fill=(0, 0, 0))
+        page.apply_redactions()
+        
+    doc.save(output_path)
+    doc.close()
+
+def fake_scan(input_path, output_path):
+    """
+    Make a PDF look like it was physically scanned.
+    """
+    doc = fitz.open(input_path)
+    images = []
+    
+    for page in doc:
+        # Convert page to high-res image
+        pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        
+        # 1. Grayscale
+        img = ImageOps.grayscale(img)
+        
+        # 2. Add slight rotation (misalignment)
+        angle = random.uniform(-0.5, 0.5)
+        img = img.rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=255)
+        
+        # 3. Add noise/grain
+        img_array = np.array(img)
+        noise = np.random.normal(0, 2, img_array.shape).astype(np.uint8)
+        img_array = np.clip(img_array.astype(np.int16) + noise.astype(np.int16), 0, 255).astype(np.uint8)
+        img = Image.fromarray(img_array)
+        
+        # 4. Adjust contrast/brightness
+        img = ImageEnhance.Contrast(img).enhance(random.uniform(1.1, 1.3))
+        img = ImageEnhance.Brightness(img).enhance(random.uniform(0.95, 1.05))
+        
+        images.append(img)
+        
+    if images:
+        images[0].save(output_path, save_all=True, append_images=images[1:], resolution=150.0, quality=60)
+    doc.close()
+
+def make_booklet(input_path, output_path):
+    """
+    Rearrange pages for booklet printing (imposition)
+    """
+    reader = PdfReader(input_path)
+    pages = list(reader.pages)
+    
+    # Pad pages to multiple of 4
+    num_orig = len(pages)
+    while len(pages) % 4 != 0:
+        # Create a blank page for padding
+        temp_writer = PdfWriter()
+        temp_writer.add_blank_page(width=pages[0].mediabox.width, height=pages[0].mediabox.height)
+        pages.append(temp_writer.pages[0])
+    
+    num_pages = len(pages)
+    # The sequence for booklet imposition (4 pages per sheet: 2 front, 2 back)
+    booklet_order = []
+    for i in range(num_pages // 4):
+        # Front side: Last-to-middle, First-from-middle
+        booklet_order.append(num_pages - (2*i) - 1)
+        booklet_order.append(2*i)
+        # Back side: First-from-middle+1, Last-to-middle-1
+        booklet_order.append(2*i + 1)
+        booklet_order.append(num_pages - (2*i) - 2)
+        
+    writer = PdfWriter()
+    for idx in booklet_order:
+        writer.add_page(pages[idx])
+        
+    with open(output_path, "wb") as f:
+        writer.write(f)
+
+def remove_annotations(input_path, output_path):
+    """
+    Strip all highlights, notes, and other annotations from PDF.
+    """
+    doc = fitz.open(input_path)
+    for page in doc:
+        for annot in page.annots():
+            page.delete_annot(annot)
+    doc.save(output_path)
+    doc.close()

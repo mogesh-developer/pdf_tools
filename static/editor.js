@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Tools
     const toolBtns = document.querySelectorAll('.tool-btn');
     const colorPicker = document.getElementById('color-picker');
+    const fontFamilyPicker = document.getElementById('font-family');
     const fontSizePicker = document.getElementById('font-size');
 
     // Init
@@ -133,7 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     drawHandles(ann.x, ann.y, ann.w, ann.h);
                 }
             } else if (ann.type === 'text') {
-                annotCtx.font = `${ann.size || 20}px Plus Jakarta Sans`;
+                const font = ann.fontFamily || 'Plus Jakarta Sans';
+                annotCtx.font = `${ann.size || 20}px ${font}`;
                 annotCtx.fillStyle = ann.color || '#000000';
                 annotCtx.fillText(ann.content, ann.x, ann.y);
                 
@@ -216,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     y: my,
                     content: content,
                     color: colorPicker.value,
+                    fontFamily: fontFamilyPicker.value,
                     size: fontSizePicker.value
                 });
             }
@@ -270,6 +273,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (ann.type === 'text') {
             document.getElementById('prop-text-content').value = ann.content;
+            document.getElementById('prop-font-family').value = ann.fontFamily || 'Plus Jakarta Sans';
+            document.getElementById('prop-font-size').value = ann.size || 20;
         } else {
             document.getElementById('prop-w').value = Math.round(ann.w);
             document.getElementById('prop-h').value = Math.round(ann.h);
@@ -280,6 +285,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (ann.type === 'rect') {
             document.getElementById('prop-w').value = Math.round(ann.w);
             document.getElementById('prop-h').value = Math.round(ann.h);
+        } else if (ann.type === 'text') {
+            document.getElementById('prop-text-content').value = ann.content;
         }
     }
 
@@ -293,6 +300,20 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('prop-text-content').addEventListener('input', (e) => {
         if (selectedId !== null) {
             annotations[selectedId].content = e.target.value;
+            drawAnnotations();
+        }
+    });
+
+    document.getElementById('prop-font-family').addEventListener('change', (e) => {
+        if (selectedId !== null) {
+            annotations[selectedId].fontFamily = e.target.value;
+            drawAnnotations();
+        }
+    });
+
+    document.getElementById('prop-font-size').addEventListener('input', (e) => {
+        if (selectedId !== null) {
+            annotations[selectedId].size = e.target.value;
             drawAnnotations();
         }
     });
@@ -342,7 +363,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 type: ann.type,
                 page: ann.page,
                 color: ann.color,
-                size: ann.size
+                size: ann.size,
+                font: ann.fontFamily
             };
             
             if (ann.type === 'text') {

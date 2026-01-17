@@ -78,11 +78,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileInputs = document.querySelectorAll('input[type="file"]');
     
     fileInputs.forEach(input => {
-        const dropZone = input.closest('.drop-zone');
+        const dropZone = input.closest('.drop-zone, .drop-zone-mini');
         if(!dropZone) return;
         
-        const label = dropZone.querySelector('.drop-content span');
-        const icon = dropZone.querySelector('.drop-content i');
+        const label = dropZone.querySelector('span'); // More generic
+        const icon = dropZone.querySelector('i');
 
         // Drag & Drop Visuals
         ['dragenter', 'dragover'].forEach(eName => {

@@ -1,6 +1,118 @@
 from pptx import Presentation
-from pptx.util import Inches
+from pptx.util import Inches, Pt
+from pptx.enum.text import PP_ALIGN
+from pptx.dml.color import RGBColor
 import os
+from PIL import Image
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name
+from pygments.formatters import RawTokenFormatter
+
+def get_layouts(template_path):
+    if not os.path.exists(template_path):
+        return []
+    prs = Presentation(template_path)
+    layouts = []
+    for i, layout in enumerate(prs.slide_layouts):
+        placeholders = []
+        for shape in layout.placeholders:
+            placeholders.append({
+                "idx": shape.placeholder_format.idx,
+                "name": shape.name,
+                "type": str(shape.placeholder_format.type)
+            })
+        layouts.append({
+            "index": i,
+            "name": layout.name,
+            "placeholders": placeholders
+        })
+    return layouts
+
+def process_text(shape, text, max_font_size=24):
+    if not shape.has_text_frame:
+        return
+    tf = shape.text_frame
+    tf.word_wrap = True
+    p = tf.paragraphs[0]
+    p.text = text
+    
+    # Simple auto-fit logic: reduce font size if text is long
+    font_size = max_font_size
+    if len(text) > 100:
+        font_size = max(12, max_font_size - (len(text) // 50) * 2)
+    p.font.size = Pt(font_size)
+
+def process_image(slide, placeholder, image_path):
+    if not image_path or not os.path.exists(image_path):
+        return
+    
+    # Use PIL to get image info and resize if needed (though add_picture handles scaling)
+    # Placeholder dimensions
+    left, top, width, height = placeholder.left, placeholder.top, placeholder.width, placeholder.height
+    
+    # Remove the placeholder shape before adding the picture
+    # placeholder.element.getparent().remove(placeholder.element)
+    
+    slide.shapes.add_picture(image_path, left, top, width=width, height=height)
+
+def process_code(slide, placeholder, code_str, lang="python"):
+    if not placeholder.has_text_frame:
+        return
+    
+    tf = placeholder.text_frame
+    tf.clear()
+    
+    try:
+        lexer = get_lexer_by_name(lang)
+    except:
+        lexer = get_lexer_by_name("text")
+        
+    # Pygments highlighting to PPT logic is complex, 
+    # for simplicity we'll just format it as a mono-spaced block with basic color and a background fill if possible
+    p = tf.paragraphs[0]
+    p.text = code_str
+    p.font.name = "Courier New"
+    p.font.size = Pt(11)
+    p.font.color.rgb = RGBColor(0, 255, 0) # Green for that "hacker" look in code mode
+    
+    # Try to set shape background to dark for code
+    fill = placeholder.fill
+    fill.solid()
+    fill.foreground_color.rgb = RGBColor(20, 20, 20)
+
+def add_slide_to_presentation(prs, layout_index, data):
+    layout = prs.slide_layouts[layout_index]
+    slide = prs.slides.add_slide(layout)
+    
+    # NEW FEATURE: Background Color
+    if data.get("bg_color"):
+        background = slide.background
+        fill = background.fill
+        fill.solid()
+        hex_color = data["bg_color"].lstrip('#')
+        fill.foreground_color.rgb = RGBColor.from_string(hex_color)
+
+    # NEW FEATURE: Speaker Notes
+    if data.get("notes"):
+        notes_slide = slide.notes_slide
+        notes_slide.notes_text_frame.text = data["notes"]
+
+    for ph in layout.placeholders:
+        idx = ph.placeholder_format.idx
+        val = data.get(str(idx)) or data.get(ph.name.lower())
+        
+        if not val:
+            continue
+            
+        if "Title" in ph.name:
+            process_text(ph, val, max_font_size=32)
+        elif "Text" in ph.name or "Body" in ph.name:
+            if data.get("is_code"):
+                process_code(slide, ph, val)
+            else:
+                process_text(ph, val)
+        elif "Picture" in ph.name or ph.name.startswith("Picture"):
+            process_image(slide, ph, val)
 
 def create_ppt_with_image(image_paths, output_path, title="Kaavalar AI Presentation"):
     prs = Presentation()

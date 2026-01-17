@@ -1,8 +1,9 @@
 
-from flask import Flask, request, send_file, render_template, redirect, url_for, abort, send_from_directory
+from flask import Flask, request, send_file, render_template, redirect, url_for, abort, send_from_directory, jsonify
 import os, uuid, shutil
-from utils.pdf_tools import merge_pdfs, split_pdf, compress_pdf, images_to_pdf, pdf_to_word, rotate_pdf, add_watermark, annotate_pdf, pdf_to_images, url_to_pdf, extract_text, add_password, remove_password, fill_form, redact_text, replace_text, add_highlight, add_text_stamp, edit_text_in_pdf, add_page_numbers, crop_pdf, reorder_pages, pdf_to_ppt, extract_pages
-from utils.ppt_tools import create_ppt_with_image, add_text_to_ppt
+from utils.pdf_tools import merge_pdfs, split_pdf, compress_pdf, images_to_pdf, pdf_to_word, rotate_pdf, add_watermark, annotate_pdf, pdf_to_images, url_to_pdf, extract_text, add_password, remove_password, fill_form, redact_text, replace_text, add_highlight, add_text_stamp, edit_text_in_pdf, add_page_numbers, crop_pdf, reorder_pages, pdf_to_ppt, extract_pages, pdf_to_excel, compare_pdfs, smart_redact, fake_scan, make_booklet, remove_annotations
+from utils.ppt_tools import create_ppt_with_image, add_text_to_ppt, get_layouts, add_slide_to_presentation
+from pptx import Presentation
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 UPLOAD_DIR = os.path.abspath("uploads")
@@ -39,20 +40,51 @@ def upload_for_edit():
 def serve_upload(filename):
     return send_from_directory(UPLOAD_DIR, filename)
 
-@app.route('/save-annotations', methods=['POST'])
-def save_annotations():
-    data = request.json
-    filename = data.get('filename')
-    annotations = data.get('annotations', [])
-    
-    input_path = os.path.join(UPLOAD_DIR, filename)
-    output_filename = f"edited_{uuid.uuid4()}.pdf"
-    output_path = os.path.join(OUTPUT_DIR, output_filename)
-    
-    # annotations should be a list of dicts: {type, page, x, y, content, color, size, etc.}
-    annotate_pdf(input_path, output_path, annotations)
-    
-    return {"status": "success", "downloadUrl": f"/outputs/{output_filename}"}
+@app.route("/esign")
+def esign_view():
+    filename = request.args.get('file')
+    if not filename:
+        return redirect(url_for('home'))
+    return render_template("esign.html", filename=filename)
+
+@app.route('/upload-for-esign', methods=['POST'])
+def upload_for_esign():
+    if 'file' not in request.files:
+        return redirect(url_for('home'))
+    file = request.files['file']
+    filename = f"{uuid.uuid4()}_{file.filename}"
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    file.save(file_path)
+    return redirect(url_for('esign_view', file=filename))
+
+@app.route("/organize")
+def organize_view():
+    filename = request.args.get('file')
+    if not filename:
+        return redirect(url_for('home'))
+    return render_template("organize.html", filename=filename)
+
+@app.route('/upload-for-organize', methods=['POST'])
+def upload_for_organize():
+    if 'file' not in request.files:
+        return redirect(url_for('home'))
+    file = request.files['file']
+    filename = f"{uuid.uuid4()}_{file.filename}"
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    file.save(file_path)
+    return redirect(url_for('organize_view', file=filename))
+
+@app.route('/pdf-to-excel', methods=['POST'])
+def pdf_to_excel_endpoint():
+    file = request.files['file']
+    input_path = f"{UPLOAD_DIR}/{uuid.uuid4()}_{file.filename}"
+    file.save(input_path)
+    output_filename = f"converted_{uuid.uuid4()}.xlsx"
+    output_path = f"{OUTPUT_DIR}/{output_filename}"
+    success = pdf_to_excel(input_path, output_path)
+    if not success:
+        return "No tables found in the PDF.", 400
+    return send_file(output_path, as_attachment=True, download_name="converted.xlsx")
 
 @app.route('/outputs/<path:filename>')
 def serve_output(filename):
@@ -187,6 +219,54 @@ def pdf_to_jpg_endpoint():
     zip_path = f"{OUTPUT_DIR}/images_{uuid.uuid4()}"
     shutil.make_archive(zip_path, 'zip', img_folder)
     return send_file(f"{zip_path}.zip", as_attachment=True, download_name="converted_images.zip")
+
+@app.route('/do-organize', methods=['POST'])
+def do_organize():
+    data = request.json
+    filename = data.get('filename')
+    order = data.get('order')
+    
+    input_path = os.path.join(UPLOAD_DIR, filename)
+    output_filename = f"organized_{uuid.uuid4()}.pdf"
+    output_path = os.path.join(OUTPUT_DIR, output_filename)
+    
+    reorder_pages(input_path, output_path, order)
+    
+    return jsonify({
+        "status": "success",
+        "downloadUrl": url_for('serve_output', filename=output_filename)
+    })
+
+@app.route('/save-annotations', methods=['POST'])
+def save_annotations():
+    data = request.json
+    filename = data.get('filename')
+    annotations = data.get('annotations')
+    
+    input_path = os.path.join(UPLOAD_DIR, filename)
+    output_filename = f"signed_{uuid.uuid4()}.pdf"
+    output_path = os.path.join(OUTPUT_DIR, output_filename)
+    
+    # Process base64 signatures if they exist
+    processed_anns = []
+    for ann in annotations:
+        if 'image_base64' in ann:
+            # Convert base64 to temp file
+            import base64
+            img_data = base64.b64decode(ann['image_base64'].split(',')[1])
+            temp_img = os.path.join(UPLOAD_DIR, f"sig_{uuid.uuid4()}.png")
+            with open(temp_img, "wb") as f:
+                f.write(img_data)
+            ann['image_path'] = temp_img
+            ann['type'] = 'image'
+        processed_anns.append(ann)
+            
+    annotate_pdf(input_path, output_path, processed_anns)
+    
+    return jsonify({
+        "status": "success",
+        "downloadUrl": url_for('serve_output', filename=output_filename)
+    })
 
 @app.route('/html-to-pdf', methods=['POST'])
 def html_to_pdf_endpoint():
@@ -402,6 +482,144 @@ def extract_pages_endpoint():
     output_path = f"{OUTPUT_DIR}/{output_filename}"
     extract_pages(input_path, output_path, pages)
     return send_file(output_path, as_attachment=True, download_name="extracted.pdf")
+
+@app.route('/compare', methods=['POST'])
+def compare_endpoint():
+    file1 = request.files['file1']
+    file2 = request.files['file2']
+    path1 = os.path.join(UPLOAD_DIR, f"v1_{uuid.uuid4()}_{file1.filename}")
+    path2 = os.path.join(UPLOAD_DIR, f"v2_{uuid.uuid4()}_{file2.filename}")
+    file1.save(path1)
+    file2.save(path2)
+    
+    output_filename = f"comparison_{uuid.uuid4()}.pdf"
+    output_path = os.path.join(OUTPUT_DIR, output_filename)
+    
+    compare_pdfs(path1, path2, output_path)
+    return send_file(output_path, as_attachment=True, download_name="comparison.pdf")
+
+@app.route('/smart-redact', methods=['POST'])
+def smart_redact_endpoint():
+    file = request.files['file']
+    input_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}_{file.filename}")
+    file.save(input_path)
+    
+    # patterns can be form field or JSON
+    patterns = request.form.getlist('patterns')
+    if not patterns:
+        patterns = ['email', 'credit_card'] # Defaults
+        
+    output_filename = f"redacted_{uuid.uuid4()}.pdf"
+    output_path = os.path.join(OUTPUT_DIR, output_filename)
+    
+    smart_redact(input_path, output_path, patterns)
+    return send_file(output_path, as_attachment=True, download_name="smart_redacted.pdf")
+
+@app.route('/fake-scan', methods=['POST'])
+def fake_scan_endpoint():
+    file = request.files['file']
+    input_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}_{file.filename}")
+    file.save(input_path)
+    output_filename = f"scanned_{uuid.uuid4()}.pdf"
+    output_path = os.path.join(OUTPUT_DIR, output_filename)
+    fake_scan(input_path, output_path)
+    return send_file(output_path, as_attachment=True, download_name="fake_scanned.pdf")
+
+@app.route('/make-booklet', methods=['POST'])
+def make_booklet_endpoint():
+    file = request.files['file']
+    input_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}_{file.filename}")
+    file.save(input_path)
+    output_filename = f"booklet_{uuid.uuid4()}.pdf"
+    output_path = os.path.join(OUTPUT_DIR, output_filename)
+    make_booklet(input_path, output_path)
+    return send_file(output_path, as_attachment=True, download_name="booklet.pdf")
+
+@app.route('/remove-annotations', methods=['POST'])
+def remove_annotations_endpoint():
+    file = request.files['file']
+    input_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}_{file.filename}")
+    file.save(input_path)
+    output_filename = f"cleaned_{uuid.uuid4()}.pdf"
+    output_path = os.path.join(OUTPUT_DIR, output_filename)
+    remove_annotations(input_path, output_path)
+    return send_file(output_path, as_attachment=True, download_name="cleaned.pdf")
+
+# --- PPT EDITOR ROUTES ---
+
+@app.route("/ppt-editor")
+def ppt_editor_view():
+    return render_template("ppt_editor.html")
+
+@app.route("/ppt-templates")
+def list_ppt_templates():
+    template_dir = os.path.join(app.static_folder, "assets", "templates")
+    if not os.path.exists(template_dir):
+        return jsonify([])
+    templates = [f.replace('.pptx', '') for f in os.listdir(template_dir) if f.endswith('.pptx')]
+    return jsonify(templates)
+
+@app.route("/ppt-layouts")
+def ppt_layouts_api():
+    template_name = request.args.get('template', 'corporate')
+    template_path = os.path.join(app.static_folder, "assets", "templates", f"{template_name}.pptx")
+    
+    if not os.path.exists(template_path):
+        template_path = os.path.join(app.static_folder, "assets", "master_template.pptx")
+        
+    layouts = get_layouts(template_path)
+    return jsonify(layouts)
+
+@app.route("/ppt-generate", methods=['POST'])
+def ppt_generate():
+    data = request.json
+    slides_data = data.get('slides', [])
+    template_name = data.get('template_name', 'corporate')
+    
+    template_path = os.path.join(app.static_folder, "assets", "templates", f"{template_name}.pptx")
+    if not os.path.exists(template_path):
+        template_path = os.path.join(app.static_folder, "assets", "master_template.pptx")
+        
+    if not os.path.exists(template_path):
+        prs = Presentation()
+        prs.save(template_path)
+        
+    prs = Presentation(template_path)
+    
+    # Remove default slides if any
+    for i in range(len(prs.slides) - 1, -1, -1):
+        rId = prs.slides._sle[i].rId
+        prs.part.drop_rel(rId)
+        del prs.slides._sle[i]
+
+    for slide_info in slides_data:
+        layout_idx = slide_info.get('layout_index', 0)
+        content = slide_info.get('content', {})
+        # background color and notes are part of slide_info now
+        content['bg_color'] = slide_info.get('bg_color')
+        content['notes'] = slide_info.get('notes')
+        content['is_code'] = slide_info.get('is_code')
+        
+        # Handle images
+        for key, val in content.items():
+            if isinstance(val, str) and val.startswith("data:image"):
+                import base64
+                img_data = base64.b64decode(val.split(',')[1])
+                img_path = os.path.join(UPLOAD_DIR, f"ppt_img_{uuid.uuid4()}.png")
+                with open(img_path, "wb") as f:
+                    f.write(img_data)
+                content[key] = img_path
+                
+        add_slide_to_presentation(prs, layout_idx, content)
+        
+    output_filename = f"presentation_{uuid.uuid4()}.pptx"
+    output_path = os.path.join(OUTPUT_DIR, output_filename)
+    prs.save(output_path)
+    
+    return jsonify({
+        "status": "success",
+        "downloadUrl": url_for('serve_output', filename=output_filename)
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)

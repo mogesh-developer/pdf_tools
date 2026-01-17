@@ -23,6 +23,12 @@
             <button class="tool-btn" id="tool-rect" title="Add Shape"><i data-lucide="square"></i></button>
             <div class="toolbar-divider"></div>
             <input type="color" id="color-picker" value="#6366f1" class="color-picker-mini">
+            <select id="font-family" class="size-select" style="width: 120px;">
+                <option value="Plus Jakarta Sans">Jakarta Sans</option>
+                <option value="Helvetica">Helvetica</option>
+                <option value="Times-Roman">Times New Roman</option>
+                <option value="Courier">Courier</option>
+            </select>
             <select id="font-size" class="size-select">
                 <option value="12">12px</option>
                 <option value="16">16px</option>
@@ -63,6 +69,15 @@
             <div id="text-properties" style="display:none;" class="prop-group">
                 <label>Text Content</label>
                 <textarea id="prop-text-content" class="input-field-sm"></textarea>
+                <label>Font Family</label>
+                <select id="prop-font-family" class="input-field-sm">
+                    <option value="Plus Jakarta Sans">Jakarta Sans</option>
+                    <option value="Helvetica">Helvetica</option>
+                    <option value="Times-Roman">Times New Roman</option>
+                    <option value="Courier">Courier</option>
+                </select>
+                <label>Size</label>
+                <input type="number" id="prop-font-size" class="input-field-sm">
             </div>
             <div id="rect-properties" style="display:none;" class="prop-group">
                 <label>Dimensions</label>

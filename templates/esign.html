@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaavalar | eSign PDF</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="editor-body">
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="/" class="brand-link">
+                <div class="brand-logo"><i data-lucide="arrow-left"></i></div>
+                <span class="brand-text">Cancel Session</span>
+            </a>
+        </div>
+        <div class="editor-toolbar">
+            <button class="tool-btn active" id="tool-select" title="Move & Place"><i data-lucide="mouse-pointer"></i></button>
+            <button class="tool-btn" id="tool-sign" title="Draw Signature"><i data-lucide="pen"></i></button>
+            <button class="tool-btn" id="tool-text" title="Type Initials"><i data-lucide="type"></i></button>
+        </div>
+        <div class="nav-right">
+            <button id="save-btn" class="action-btn-sm primary">
+                <i data-lucide="check-circle"></i> Finalize & Sign
+            </button>
+        </div>
+    </nav>
+
+    <div class="editor-container">
+        <aside class="thumbnail-sidebar" id="thumbnail-sidebar"></aside>
+
+        <main class="workbench">
+            <div id="pdf-container" class="pdf-viewer">
+                <canvas id="pdf-canvas"></canvas>
+                <canvas id="annotation-canvas"></canvas>
+            </div>
+            
+            <div class="page-controls">
+                <button id="prev-page" class="page-nav-btn"><i data-lucide="chevron-left"></i></button>
+                <span class="page-info">Page <span id="page-num">1</span> of <span id="page-count">-</span></span>
+                <button id="next-page" class="page-nav-btn"><i data-lucide="chevron-right"></i></button>
+            </div>
+        </main>
+
+        <aside class="properties-panel">
+            <div class="panel-header">Signature Pad</div>
+            <div id="sign-pad-container" class="sign-pad-wrap">
+                <canvas id="signature-pad" width="240" height="150" style="border:1px dashed var(--card-border); background:white;"></canvas>
+                <div class="pad-tools">
+                    <button onclick="clearPad()" class="action-btn-sm">Clear</button>
+                    <button onclick="addSignatureToPage()" class="action-btn-sm primary">Use Signature</button>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div class="panel-header">Instructions</div>
+            <p class="hero-desc" style="font-size: 0.8rem; text-align: left;">1. Draw your signature in the pad above.<br>2. Click 'Use Signature'.<br>3. Drag the signature to the desired location on the PDF.</p>
+        </aside>
+    </div>
+
+    <div id="editor-loader" class="loader-container">
+        <div class="loader-content"><div class="spinner"></div><p>Preparing Document...</p></div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        window.PDF_FILENAME = "{{ filename }}";
+    </script>
+    <script src="/static/esign.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
